@@ -1,0 +1,593 @@
+UNIVERSITAT POLITÈCNICA DE VALÈNCIA
+CENTRO DE FORMACIÓN PROFESIONAL
+Máster de Formación Permanente en Diseño Microelectrónico
+
+“A 22-nm FD-SOI Flip-Flop design”
+
+
+
+Autor:
+Jose Vte. Casaña Copado
+Tutores:
+Miguel Chanca Martín
+Pau Salvador Llàcer
+VALÈNCIA, 2026
+
+Resumen 
+La memoria del TFG/TFM empieza con un breve resumen de entre 150 y 200 palabras, escrito en castellano, valenciano e inglés. Estas páginas van sin numerar.
+
+Resum
+La memoria del TFG/TFM comença amb un breu resum d’entre 150 i 200 paraules, escrit en castellà, valencià i anglès. Aquestes pàgines van sense numerar.
+
+
+Abstract
+The thesis begins with a short abstract (between 150 and 200 words) written in Spanish, Valencian, and English. The cover page and the pages containing the three versions of the abstract are not numbered.
+
+
+
+Agradecimientos
+Este trabajo ha sido realizado con el apoyo de la Cátedra Internacional UPV–VaSiC de Diseño Microelectrónico: Hacia el Campus Internacional de Semiconductores, en el marco del Programa de Ayudas para la Creación de Cátedras Universidad–Empresa (Cátedras CHIP), financiado por la Unión Europea – NextGenerationEU y por la Secretaria de Estado de Telecomunicaciones e Infraestructuras Digitales del Ministerio para la Transformación Digital y la Función Pública, dentro del Plan de Recuperación, Transformación y Resiliencia (referencia TSI-0691000-2023-0009).
+A su vez, agradecer al equipo de Bosch en especial Miguel/David por todo el apoyo técnico otorgado para la realización de este trabajo, sin la cual no hubiese sido posible. 
+
+
+RESUMEN EJECUTIVO
+La memoria de TFM del Máster de Formación Permanente en Diseño Microelectrónico debe desarrollar en el texto los siguientes conceptos, debidamente justificados y discutidos, centrados en el ámbito del diseño microelectrónico.
+
+CONCEPTCONCEPTO¿Cumple? (S/N)¿Dónde? (páginas)1. IDENTIFY:1. IDENTIFICAR:1.1. Problem statement and opportunity1.1. Planteamiento del problema y oportunidad1.2. Constraints (standards, codes, needs, requirements & specifications)1.2. Toma en consideración de los condicionantes (normas técnicas y regulación, necesidades, requisitos y especificaciones)1.3. Setting of goals1.3. Establecimiento de objetivos2. FORMULATE:2. FORMULAR:2.1. Creative solution generation (analysis)2.1. Generación de soluciones creativas (análisis)2.2. Evaluation of multiple solutions and decision-making (synthesis)2.2. Evaluación de múltiples soluciones y toma de decisiones (síntesis)3. SOLVE:3. RESOLVER:3.1. Fulfilment of goals3.1. Evaluación del cumplimiento de objetivos3.2. Overall impact and significance (contributions and practical recommendations)3.2. Evaluación del impacto global y alcance (contribuciones y recomendaciones prácticas)
+Table of Contents
+Chapter 1.	Introduction.	1
+1.1	IDACs (Current-Steering DACs).	2
+1.2	Advanced Communication Systems.	3
+1.3	The technology.	3
+Chapter 2.	Understanding 22-nm.	4
+2.1	Why 22-nm for this work.	4
+2.2	Technology overview (22-nm FD-SOI device characteristics)	4
+2.3	Simulation environment and methodology.	5
+2.4	NFET and PFET characterization.	6
+2.4.1	ID – VGS (transfer) characteristics.	6
+2.4.2	ID – VDS (output) characteristics.	7
+2.4.3	Threshold voltage, Id, IdOff, gm and gds extraction.	8
+2.4.4	Device capacitances.	11
+2.5	LVT vs. SLVT devices.	13
+2.5.1	LVT vs. SLVT NFET characterization.	14
+2.5.2	LVT vs. SLVT PFET characterization.	18
+2.6	Current mirror, mismatch characterization.	21
+2.6.1	Testbench description.	22
+2.6.2	Monte Carlo reports.	23
+Chapter 3.	Flip-Flop design.	27
+3.1.1	Latches as the building block.	27
+3.2	Basic structures inside a latch.	29
+3.2.1	Transmission gate (T-gate) as a switch.	30
+3.1.1	Inverter characterization.	30
+3.2	Flip-flop topologies considered.	31
+1.	Tests	36
+3.2.2	T-Gate and Inverter, to characterize the devices.	36
+3.2.3	Flip-Flops.	36
+Chapter 4.	Conclusions.	39
+4.1	Further work.	39
+References.	41
+
+
+
+
+
+
+Chapter 1. Introduction.
+The continuing demand for higher performance and lower power consumption in integrated circuits has driven technology scaling into advanced process nodes. At the 22 nm node, Fully Depleted Silicon-On-Insulator (FD-SOI) technology is an attractive alternative to bulk CMOS for many applications because it mitigates short-channel effects, reduces parasitic capacitances, and offers body-biasing capability that can be used for dynamic performance-power tuning [1], [2]. This thesis focuses on the design and characterization of flip-flops implemented in a 22 nm FD-SOI process, with particular emphasis on device-level characterization and robustness across operating conditions (process, supply voltage, and temperature corners), and on design trade-offs for timing, area, and power.
+Flip-flops are fundamental sequential building blocks used throughout digital systems, from microprocessors to communications interfaces [2]. In advanced technology nodes, flip-flop performance becomes increasingly sensitive to device variability and leakage, as well as to supply conditions and operating corners. FDSOI provides additional design flexibility through back-bias capability [1]; however, in this work no back-bias sweeps are performed, and the evaluation is restricted to baseline operation across PVT corners. Designing flip-flops that remain robust under these conditions—while accounting for technology-specific device behaviour—is therefore an important practical and academic problem.
+Objectives of this work:
+* Design and evaluate three flip-flop topologies in a 22 nm FDSOI process, targeting competitive timing, power, and area, and assessing their suitability for driving currentsteering DAC control logic (IDACs).
+* Characterize foundational devices and circuit primitives (from device options to transmission gates and inverters) to extract parameters relevant to flip-flop performance and robustness.
+* Define test structures and simulation methodologies (from DC sweeps to consistent timing and noise measurements) to enable repeatable characterization of FDSOI devices and flip-flops.
+* Evaluate flip-flop behaviour across supply voltage, process corners, and temperature to quantify robustness and identify opportunities for optimization.[JC1]
+This research combines device characterization, circuit design, and simulation:
+* Device and cell characterization: Basic cells and device structures—including current mirrors, transmission gates, and inverters—are used to extract transistor-level metrics and to study performance trends in a 22 nm FDSOI process.
+* Circuit design: Based on these observations, three flip-flop topologies (latch-based, master–slave, and transmission-gate-based)[JC2] are selected, sized, and simulated across PVT (process–voltage–temperature) corners.
+* Testing and simulation: Tests and simulations are conducted under controlled bias and stimulus conditions to validate the designs and to quantify timing variation, leakage, and noise-related parameters.
+This work provides an overview of how to design flip-flops suitable for controlling high-speed mixed-signal blocks such as IDACs. Given the role of IDACs in communication systems, and the semiconductor technology trends that impact their design, aligning flip-flop timing robustness with converter control requirements is an important practical consideration in high-quality implementations.
+1.1 IDACs (Current-Steering DACs).
+Digital-to-analog converters (DACs) translate digital binary codes into corresponding analog voltages or currents. In an ideal DAC, the digital codes map to analog levels that are uniformly spaced across the output range [3]. Current-steering DACs (CS DACs, also referred to as IDACs) are commonly used in high-speed mixed-signal systems because they can switch currents rapidly and scale well with advanced CMOS nodes [4].
+A current-steering DAC typically consists of an array of matched unit current sources, switching elements that steer each unit current to one of two outputs, and an output summing network (e.g., a resistive or capacitive load). Each digital code selects the corresponding number of unit currents steered toward the positive output (with the remainder steered to the negative output), producing a differential output current [4], [5].
+A typical DAC unit cell contains:
+* An array of matched current sources (often implemented with cascode transistors to increase output impedance and reduce sensitivity to voltage variations at internal nodes).
+* A differential switching quad (NMOS and/or PMOS switches) that steers the unit current to the output or to a dump/reference branch.
+* Optional cascode devices above and/or below the switches to isolate the switching node and improve linearity and output impedance [6], [7].
+Figure 1.1 illustrates a conceptual current-steering DAC unit cell in which a unit current is steered either to the output or to a dump branch.
+
+Figure 1.1: Conceptual current-steering DAC unit cell.
+To achieve both high speed and high linearity, designers often use segmentation (a combination of thermometer coding and binary weighting). Thermometer-coded segments reduce switching glitch energy and mismatch sensitivity for the most significant bits, while binary weighting reduces area and complexity for the least significant bits. Static linearity in a current-steering DAC is primarily determined by matching among the unit current sources: device mismatch produces differential nonlinearity (DNL) and integral nonlinearity (INL) errors [3 - 8].
+In high-speed IDACs, dynamic performance is also influenced by the alignment of switching events across unit elements. Timing skew and uncertainty in the digital control signals can increase glitch energy and degrade dynamic linearity. Therefore, when designing flip-flops for IDAC control logic in a 22 nm FDSOI process, key considerations include timing accuracy, low clock-to-output variation across PVT, and layout-aware strategies (even at schematic level) that minimize coupling into sensitive switching nodes.
+1.2 Advanced communication systems. 
+Modern applications in telecommunications and sensing increasingly require high-linearity waveform generation and high-speed data conversion. Advanced communication systems—including automotive radar, high-bandwidth wireless links, and sensor platforms for driver assistance—place stringent demands on mixed-signal hardware. In these systems, current-steering DACs (IDACs) are central building blocks because they enable high-speed, precise waveform synthesis and support wideband modulation schemes in which linearity and noise performance are critical.
+Radar system-on-chip (SoC) implementations illustrate the broader trend toward higher integration and advanced process nodes: modern devices integrate millimetre-wave front ends together with substantial on-chip digital processing [9]. In this context, robust sequential cells remain important because they distribute timing and control signals to large arrays of mixed-signal unit elements. Even when the flip-flop is not the dominant performance limiter, its clock-to-output behaviour, sensitivity to operating conditions, and power consumption can still affect overall robustness and design margin.
+This work was conducted with the support of Bosch Semiconductors. The preceding discussion of automotive radar and communication applications motivates the flip-flop design targets by linking them to realistic mixed-signal use cases in which timing robustness across operating conditions is critical.[JC3]
+1.3 The technology.
+Selecting the right technology involves understanding not only performance requirements but also design goals related to power, cost, and the target application domain. The demand for greater energy efficiency motivates the exploration of advanced nodes such as 22 nm for low-power and high-performance designs. At this node, FDSOI platforms offer device characteristics that are advantageous for both digital and mixed-signal circuits, including reduced parasitic capacitances and improved electrostatic control compared with bulk CMOS [1].
+FDSOI technologies also provide the capability for forward and reverse back-biasing, which can be used as a post-fabrication knob to trade speed for leakage and to tune circuit behaviour across operating conditions [1]. However, since no back-bias sweeps are performed in this work, the analysis in this thesis focuses on baseline device and circuit behaviour under supply-voltage variation, process corners, and temperature variation.
+In the following chapter, the 22 nm FDSOI technology is introduced from a circuit designer’s perspective, and the simulation environment and low-level characterization structures used in this thesis are described. These foundational results are then used to guide flip-flop design, sizing, and evaluation.
+Chapter 2. Understanding 22-nm.
+This chapter motivates the selection of a 22nm FDSOI technology (also referred to as 22FDX) and establishes the device-level basis used throughout this work. The flip-flop circuits analysed in the following chapters are constrained by transistor behaviour, including drive capability, leakage, intrinsic capacitances, and variability. For that reason, this chapter first summarizes the key characteristics of the 22nm node that are relevant to high-speed mixed-signal operation. It then describes the simulation methodology and a set of baseline device tests (NFET/PFET), followed by a comparison between LVT and SLVT options. Finally, a Monte Carlo experiment using a current-mirror structure is used to quantify mismatch through the output-current standard deviation (? IOUT) and histogram-based analysis.[JC4]
+2.1 Why 22-nm for this work. 
+Selecting the technology node is a central design decision because it directly constrains the achievable speed, power, linearity, and robustness of the overall system. As CMOS nodes scale, switching energy can be reduced through lower supply voltages and smaller parasitic capacitances. However, maintaining performance at reduced supply voltage becomes increasingly challenging due to reduced voltage headroom and the growing sensitivity of delay to process and temperature variation. This fundamental trade-off between performance and energy efficiency motivates the exploration of advanced nodes for ultra-low-power implementations.
+Submicron gate-length MOS transistors have historically enabled sample rates in the hundreds of MHz range, supporting the implementation of high-speed converters and fast-switching digital interfaces [7]. At 22 nm, these advantages are strengthened by reduced device capacitances and improved transistor transit frequency[JC5], which benefit timing-critical elements such as flip-flops and switching-intensive circuits such as current-steering DACs [2.3[JC6]]. In addition, for systems that combine dense digital processing with precision analog or RF blocks (e.g., communications and sensing SoCs), these properties are especially relevant because they affect both power consumption and the predictability of device characteristics used in biasing and current generation [2.3 and 2.4[JC7]].
+The choice of 22 nm is consistent with the goals of this work, which focuses on device and circuit characterization rather than on pushing an absolute technology limit. The circuits studied later depend heavily on (i) device drive capability (affecting timing), (ii) leakage (affecting static power), (iii) intrinsic capacitances (affecting dynamic power and switching transients), and (iv) mismatch (affecting current accuracy and DAC linearity). For this reason, this chapter establishes a device-level baseline in 22nm FDSOI through systematic NFET/PFET characterization over process corners and through a Monte Carlo mismatch experiment based on a current-mirror testbench.
+In summary, the 22-nm node represents a practical point in the scaling roadmap where improved switching speed and reduced parasitic capacitances enable higher operating frequencies and lower dynamic energy per transition compared with older nodes. For timing-critical sequential cells such as flip-flops, these benefits translate into faster internal regeneration and reduced clock-to-Q delay for a given power budget. For current-steering architectures such as IDACs, reduced parasitics and improved electrostatics contribute to faster switching and can help preserve dynamic linearity by limiting unwanted charge injection and transient coupling at switching nodes.
+2.2 Technology overview (22-nm FD-SOI device characteristics)
+Technology scaling is widely used to improve energy efficiency; however, scaling is typically accompanied by a reduction in supply voltage to maintain device reliability and power density, which in turn pushes designs toward lower threshold voltages to preserve performance [10]. 
+Within this context, 22 nm FD?SOI has gained attention as a planar technology option that supports continued performance scaling while improving energy efficiency, contributing to the extension of CMOS relevance for low-power and mixed-signal integration. Relative to conventional bulk CMOS, FD?SOI devices can exhibit reduced leakage and lower parasitic capacitances associated with source/ drain junctions. These properties benefit both dynamic power consumption and switching speed. They are directly relevant to this thesis because flip-flop timing and IDAC control quality depend on transistor drive current, leakage behaviour, intrinsic capacitances, and device-to-device variability.
+FD?SOI devices are characterized by a thin silicon film on top of a buried oxide, which strengthens gate control over the channel and reduces junction-related parasitics compared with bulk CMOS. Figure 2.1 shows conceptual cross-sections comparing bulk CMOS and FD-SOI [11]. For the purposes of this thesis, the most relevant consequences at the circuit level are:
+* Electrostatic control and short-channel behaviour: Improved channel control helps maintain predictable I–V behaviour in scaled devices, which is important when building timingcritical regenerative structures such as latches and flipflops.
+* Reduced parasitic capacitances: Lower parasitic capacitances reduce switching energy and can improve edge rates for a given drive current, affecting both flipflop timing and the dynamic behaviour of IDAC switching networks.
+* Leakage and lowvoltage operation: Reduced leakage mechanisms (relative to comparable bulk nodes) support lowpower operation and reduce static power consumption, which is relevant for always-on scenarios.
+* Device options (LVT/SLVT): The PDK provides different threshold-voltage options, enabling explicit trade-offs between speed and leakage. This work compares LVT and SLVT devices using the same characterization methodology to guide later circuit choices.
+     Figure 21: Bulk-CMOS and FD-SOI cross-section comparative.
+FDSOI technologies also offer the capability for forward and reverse back-biasing, which can be used to tune threshold voltage and trade off speed against leakage. However, no back-bias sweeps are performed in this work; therefore, the analysis in this thesis focuses on baseline behaviour under supply-voltage variation, process corners, and temperature. Back-bias exploration is outlined as a natural extension of this work in the Further work section.
+2.3 Simulation environment and methodology.
+All device characterization results in this chapter are obtained using Cadence simulation tools and the 22 nm FD?SOI PDK. Unless otherwise stated, results are produced at the nominal supply voltage (VDD = 0.8 V) and nominal temperature (T = 25 ºC).
+The simulations are organized to extract a set of device metrics relevant to both timing-critical design and current-source accuracy through standardized testbenches:
+* DC characteristics: ID-VGS and ID-VDS sweeps for NFET and PFET devices under defined bias conditions.
+* Small-signal parameters: extraction of transconductance (gm) and output conductance (gds) at representative operating points.
+* Threshold voltage extraction: consistent method for estimating (Vth) across devices and conditions.
+* Leakage measurements: off-state leakage current (Ioff) under defined off-bias conditions.
+* Capacitances: extraction of gate-related capacitances, specifically (Cgg) and (Cgd), which influence switching speed and dynamic power.
+To ensure fair comparisons, NFET and PFET devices are characterized using identical sweep setups, and LVT/SLVT variants are evaluated with the same device dimensions and bias conditions. Process corners are evaluated to capture typical (TT) and extreme (SS/FF) variation. In addition, Monte Carlo simulations are used to assess local mismatch. All simulations are performed in Cadence Virtuoso Studio IC 23.1 using the GlobalFoundries 22nm FDSOI PDK obtained through EUROPRACTICE.
+2.4 NFET and PFET characterization.
+This section characterizes baseline NFET and PFET devices available in the technology to establish reference behaviour for later circuit analysis. The available device geometries span W = [0.08, 10] µm and L = [0.02, 8] µm). The testbenches used to characterize the NFET and PFET devices are shown in Figure 2.2. DC voltage sources are applied to the gate and drain terminals to perform the required sweeps. For each run, device width and length are configurable parameters, and the number of fingers is set to one.
+           Figure 22: NFET and PFET device schematics.
+2.4.1 ID – VGS (transfer) characteristics. 
+The ID–VGS sweep is used to observe subthreshold conduction, the threshold transition region, and strong-inversion drive current. For the NFET, the transfer curve is obtained by sweeping VGS from 0 to 0.9?V in steps of 0.05?V, while VDS is held at representative values (VDS = 0.05, 0.3, 0.6, 0.8, 0.9?V). The 0.9?V case is included as an extended-bias condition to highlight drain-induced effects.
+Using multiple VDS values allows visual inspection of DIBL (drain-induced barrier lowering), observed as an increase in subthreshold current and an apparent reduction in threshold voltage at higher VDS. For the PFET, the same characterization is performed using the corresponding voltage polarities (sweeping VSG) with fixed VSD values). In both cases, the device dimensions are (W = 0.17 µm) and (L = 0.02µm). The resulting transfer characteristics are shown in the following figures:
+
+Figure 23: NFET transfer characteristic: ID - VGS with stepped drain bias.
+
+Figure 24: PFET transfer characteristic: ID - VSG with stepped drain bias.
+As VDS increases, the transfer curves shift upward (higher ID for the same gate bias), particularly in the subthreshold region. This behaviour is consistent with drain-induced barrier lowering (DIBL), which increases subthreshold current and effectively reduces the apparent threshold voltage at higher VDS.
+2.4.2 ID – VDS (output) characteristics. 
+The ID–VDS sweep is used to observe the transition from the linear (ohmic) region to saturation and to evaluate channel-length modulation at higher drain bias. For the NFET, the output characteristics are obtained by sweeping VDS from 0 to 0.9?V (?VDS = 0.05?V) while VGS is stepped through representative values (VGS = 0.1 to 0.9?V in 0.1?V increments). At low VDS, ID increases approximately linearly with VDS, whereas at higher VDS the device approaches saturation. The remaining positive slope of ID in the saturation region reflects channel-length modulation; that is, the effective channel length decreases with increasing VDS, causing ID to continue increasing. 
+As for the transfer curves, the device dimensions are fixed to (W = 0.17 µm) and (L = 0.02 µm) for both devices. For the PFET, the same characterization is performed using the corresponding voltage polarities (sweeping VSD while stepping VSG), producing an analogous family of output curves, as shown in the following figures:
+
+Figure 25:NFET output characteristic: ID - VDS with stepped gate bias.
+
+Figure 26: PFET output characteristic: ID - VSD with stepped gate bias.
+2.4.3 Threshold voltage, Id, IdOff, gm and gds extraction.
+Section 2.4.3 reports extracted electrical parameters obtained from DC characterization testbenches for a discrete set of device geometries chosen to be representative of practical sizing and directly comparable to foundry characterization. To keep the discussion concise while still capturing geometry dependence, results are presented for the following (W/L) combinations: 0.17?µm/0.02?µm, 0.17?µm/0.024?µm, 0.5?µm/0.02?µm, 10?µm/8?µm, and 0.08?µm/0.02?µm. 
+This set spans the minimum-width, near-minimum-length device (0.08/0.02); a commonly used reference geometry for baseline comparison (0.17/0.02); a slightly longer channel to highlight short-channel sensitivity (0.17/0.024); a moderate-width, near-minimum-length device representative of a higher-drive sizing choice (0.5/0.02); and a large-width, long-channel device (10/8) that serves as a long-channel reference with reduced short-channel effects.
+The same geometries are used for both NFET and PFET devices. Parameters are evaluated at the nominal temperature (T = 25 ºC) for the TT, FF, and SS process corners to enable consistent comparison across device type, geometry, and corner.
+Small-signal parameters are extracted at operating points of interest following the GlobalFoundries (GF) characterization definitions. For PFET measurements, a negative supply is used and (VBS = VDD) is enforced; therefore, when (VDD = -0.8 V) the PFET body is tied to (-0.8 V). For NFET measurements, GF specifies (VBS = 0 V), so the NFET body is tied to the source (ground/reference), ensuring zero body bias during extraction.
+In addition, operating points are selected using fixed drain-current references: (Iconstant = 300 nA) for NFETs and (Iconstant = 70 nA) for PFETs. The extracted small-signal parameters are presented in Table 2.1:
+ParameterConditionVthLinVgs @ Iconstant, Vds = VddLinVthSatVgs @ Iconstant, Vds = VddIdSatId @ Vgs = Vdd, Vds = VddIdOffId @ Vgs = 0V, Vds = Vddgm?Id/?Vgs @ Vgs = 0.1 + VthLin, Vds = Vdd/2gds?Id/?Vds @ Vgs = 0.1 + VthLin, Vds = Vdd/2Table 21: Small signal evaluation conditions (GF definition).
+The linear-region drain bias is set to (Vds Lin = +0.05 V) for NFETs and (Vds Lin = -0.05 V) for PFETs. The bias point (Vgs = 0.1 + Vth) is used to evaluate gm and gds slightly above threshold, ensuring a consistent moderate-inversion operating condition across geometries and process corners and avoiding numerical sensitivity associated with extracting derivatives exactly at Vth. A brief description of each small-signal parameter is provided:
+* VthLin (linear-regime threshold voltage) is the gate voltage required to reach the reference current at low VDS, and is commonly used to compare turn-on behaviour with minimal drain-induced effects.
+* VthSat (saturation-regime threshold voltage) is the gate voltage required to reach the reference current at nominal/high VDS, reflecting threshold behaviour under a stronger lateral field and more representative on-state conditions.
+* IdSat (on-state drive current) is the drain current at maximum VGS and VDS and indicates the device current capability relevant for speed.
+* IdOff (off-state leakage current) is the drain current at (VGS = 0) and nominal/high VDS, and quantifies leakage in the nominal off condition (standby power).
+* gm (transconductance) indicates how effectively the device converts gate-voltage variations into drain current, relevant for switching speed and gain.
+* gds (output conductance) reflects finite output resistance and impacts current-source accuracy, intrinsic gain, and mirror compliance.
+For these measurements, 4-terminal devices are used to explicitly control the bulk connection Figure 2.7. The NFET bulk is tied to 0 V (ground), enforcing (VBS = 0) during extraction. For the PFET, the bulk is tied to the negative supply rail (-VDD), so that when (VDD = 0.8 V) the body is at -0.8 V, ensuring a well-defined body potential and avoiding unintended body bias.
+        Figure 27: NFET and PFET devices with bulk connection schematics.
+Parameter
+(units)Width
+(µm)Length
+(µm)NFET - 22FDX-PLUS (T=25ºC)TTFFSSVthLin 
+[mV]0.170.02336.2275.8395.70.170.024342.6286.3398.10.50.02325.3281.3368.7108387.2358.6415.00.080.02352.6275.1428.9VthSat 
+[mV]0.170.02265193335.50.170.024286.3222.1349.30.50.02251.1197.8303.3108377.9349.5405.50.080.02285.8194.5375.1IdSat [µA/µm]0.170.028361040.8634.20.170.024776.5959.9595.20.50.02820.4969.9669.41085.346.554.320.080.02876.91147.2611.7IdOff 
+[A/µm]0.170.029.68e-097.83e-081.22e-090.170.0243.03e-092.12e-084.48e-100.50.021.41e-086.72e-082.99e-091086.77e-121.07e-111.46e-120.080.025.50e-097.76e-084.08e-10gm [µA/V/µm]0.170.021.29e+031.42e+031.14e+030.170.0241.19e+031.31e+031.06e+030.50.021.24e+031.34e+031.12e+031085.53e+005.81e+005.26e+000.080.021.39e+031.55e+031.19e+03gds [µA/V/µm]0.170.021.04e+021.40e+027.28e+010.170.0247.43e+019.77e+015.29e+010.50.021.05e+021.32e+027.97e+011086.38e-036.83e-035.95e-030.080.021.04e+021.48e+026.57e+01Table 22: Extracted DC parameters for NFET device.
+FDSOI offers improved electrostatics compared to bulk CMOS, typically enabling higher transconductance (gm) and lower output conductance (gds). These benefits stem from the fully depleted channel and the presence of a buried oxide (BOX), which reduce parasitic junction capacitances and weaken drain-to-channel coupling. As a result, short-channel effects such as drain-induced barrier lowering (DIBL) are mitigated, helping to limit off-state leakage [12]. 
+This trend is reflected in the extracted device metrics reported in Table 2.2 (NFET) and Table 2.3 (PFET), where both device types exhibit relatively high gm and comparatively low gds across the evaluated geometries and TT/FF/SS process corners, indicating strong gate control and limited channel-length modulation.
+Parameter
+(units)Width
+(µm)Length
+(µm)PFET - 22FDX-PLUS (T=25ºC)TTFFSSVthLin 
+[mV]0.170.02-290-234.5-3480.170.024-296.3-244.9-350.30.50.02-290.5-250.9-331.8108-307-279.8-335.70.080.02-292.5-219.6-369.1VthSat 
+[mV]0.170.02-221.7-158.6-288.30.170.024-241.2-184.4-301.30.50.02-219-172.9-267.4108-298.7-271.7-327.20.080.02-228.7-147.3-315.1IdSat [µA/µm]0.170.02666.4817.5517.40.170.024607.6738.7476.90.50.02525.7611.4438.21083.1543.9432.5080.080.02687.1896.1488.1IdOff 
+[A/µm]0.170.021.167e-085.98e-082.1e-090.170.0245e-092.272e-081.019e-090.50.021.427e-084.579e-084.232e-091081.767e-101.097e-092.68e-110.080.028.038e-097.221e-088e-10gm [µA/V/µm]0.170.028.39e+029.14e+027.23e+020.170.0247.15e+027.81e+026.31e+020.50.026.72e+0271.5e+025.96e+021081.82e+002.04e+001.79e+000.080.028.43e+029.59e+027.11e+02gds [µA/V/µm]0.170.025.43e+016.94e+013.88e+010.170.0243.49e+014.42e+012.61e+010.50.024.55e+015.58e+013.46e+011082.52e-032.84e-032.59e-030.080.025.26e+027.09e+023.57e+02Table 23: Extracted DC parameters for PFET device.
+2.4.4 Device capacitances.
+To finalize this characterization, device capacitances are extracted to capture switching-relevant parasitics. The total gate capacitance (Cgg) determines input loading and directly impacts dynamic power, while the gate–drain capacitance (Cgd) is associated with Miller coupling, affecting edge rate, feedthrough, and timing. In addition to reporting (Cgg), the individual gate capacitance components (Cgs, Cgd, and Cgb) are also extracted to verify charge partitioning consistency, i.e. Cgg ? Cgs + Cgd + Cgb. 
+Capacitances are evaluated at a representative on-state bias condition to reflect typical switching operation. For the NFET, values are extracted at (VGS = VDS = VDD = 0.8 V); for the PFET, the corresponding bias is used (VGS = VDS = -0.8 V). Results are reported for the reference geometry (W/L = 0.17µm/0.02µm) across the TT, SS, and FF process corners at (T = 25 ºC).
+In addition to the terminal capacitances, the total gate capacitance is further decomposed following the GF convention. The intrinsic gate-to-channel capacitance in inversion, (Cgc, INV), represents the portion of the gate capacitance associated with channel charge under strong inversion, while Cov captures the largely geometry-driven overlap/fringing contribution that remains even when the device is biased off.
+When overlap-only model terms are not directly available, these quantities can be estimated from two operating points. The overlap component is approximated from an off-state condition with minimal channel charge:
+C_ov?C_gg  :(V_GS=0,V_DS=V_DD)[JC8]
+and is reported as (Cov/2) when using the GF unit convention of fF/µm/side. The intrinsic inversion component is then estimated from an on-state condition in the linear region (to avoid pinch-off):
+C_(gc,INV)?C_gg  :(V_GS=V_DD,V_DS=V_(DS,lin))[JC9]
+This decomposition is useful because Cov sets a bias-insensitive lower bound on input loading and Miller coupling (particularly relevant for fast edges and small devices), whereas Cgc, INV quantifies the inversion-charge-related capacitance and therefore tracks effective gate control and on-state charge storage. Together, these metrics help explain technology- and corner-dependent differences in delay and dynamic power beyond what is visible from Cgg alone.
+Parameter
+(units)NFET - 22FDX-PLUS (T=25ºC)TTFFSSCgg (aF)178.2178.7176.5Cgs (aF)122.8125.6118.9Cgd (aF)53.5151.5955.33Cgb (aF)1.8361.5352.241Cgc, INV (fF/µm)1.2011.1881.212Cov (fF/µm/side)0.3310.3240.339Table 24: NFET capacitances.
+Parameter
+(units)PFET - 22FDX-PLUS (T=25ºC)TTFFSSCgg (aF)199.7198.2200.8Cgs (aF)132.4132.7131.4Cgd (aF)66.3964.8168.09Cgb (aF)0.9530.6831.294Cgc, INV (fF/µm)1.2631.2471.277Cov (fF/µm/side)0.4070.3990.416Table 25: PFET capacitances.
+Table 2.4 and Table 2.5 summarize the extracted NFET and PFET gate-capacitance components for the reference geometry across the TT, FF, and SS process corners. The relatively small drain/source-related parasitic capacitances (notably Cgd and Cgs) are consistent with improved high-frequency output impedance, which is beneficial in current-steering DACs by supporting higher linearity (reduced harmonic content), higher output impedance, and improved frequency response [12].
+
+2.5 LVT vs. SLVT devices.
+Designing in FD-SOI is largely similar to designing in bulk CMOS, but it benefits from improved substrate isolation. In FD-SOI, the channel formed under the gate-oxide is separated from the well (back-gate) by a thin buried oxide (BOX) layer, which reduces junction capacitances and enables electrostatic control of the channel through the back-gate. This architecture provides additional flexibility: parasitic capacitances (notably source/drain junction capacitances) are reduced, the effective threshold voltage can be tuned through the device option, and well configuration (conventional well vs. flip-well) is available [12].
+Figure 2.8 from [13] illustrates the FDSOI cross-section and the corresponding well arrangements for nFET and pFET devices, highlighting the buried oxide (BOX), the well regions, and the back-gate (BG) contact that enables body-bias tuning.
+
+Figure 28: Cross section of the thin-oxide n-and p-MOSFETs in 22nm FDSOI.
+In 22FDX, different device/well combinations are used to target specific speed–leakage trade-offs. In particular, flip-well devices place the transistor body in the opposite well type to enable stronger back-gate control and lower effective threshold voltage (e.g., SLVT options), whereas conventional-well devices use the standard well arrangement and are typically selected when lower leakage is prioritized:
+* NMOS in N-well (flip-well) ? super-low VT (e.g. slvtnfet)
+* PMOS in P-well (flip-well) ? super-low VT (e.g. slvtpfet)
+* NMOS in P-well (conventional-well) ? lower-leakage option (e.g. nfet)
+* PMOS in N-well (conventional-well) ? lower-leakage option (e.g. pfet)
+Because low power is a primary design constraint in most practical applications, reduced-threshold devices are often selected to improve performance at low supply voltage, at the expense of increased leakage. The 22FDX PDK provides multiple threshold options; in this work, LVT (low-threshold-voltage) and SLVT (super-low-threshold-voltage) devices are evaluated.
+Figure 2.9 from [14]summarizes the LVT/SLVT device options and associated well configurations used to realize LVT and SLVT transistors and to enable back-gate biasing through the well contacts. Conceptually, LVT devices rely on light channel doping and provide higher performance at the cost of increased leakage, while SLVT devices employ an (intrinsically) undoped channel and offer even higher speed, requiring careful thermal and leakage analysis. In the so-called flip-well construction, NFETs are implemented in an N-well (n-type back gate) and PFETs are implemented in a P-well (p-type back gate), strengthening back-gate control and enabling lower effective voltage threshold. Using identical dimensions and identical testbenches, LVT and SLVT devices are compared for both NFET and PFET in the following subsections.
+
+Figure 29: 22FDX flipped-well FET cross-section.
+2.5.1 LVT vs. SLVT NFET characterization.
+As in Section 2.4, this section characterizes and compares the LVT (lvtnfet) and SLVT (slvtnfet) NFET options using the same DC extraction methodology adopted for the baseline NFET. The testbenches used for the transfer and output characteristics are shown in Figure 2.10. Independent DC voltage sources bias the gate and drain terminals, while the source and bulk (body) terminals are tied to 0?V, enforcing (VBS = 0 V). Device width (W) and length (L) are parameterized, and a single-finger configuration (nf=1) is used to keep the comparison consistent across device options.
+
+Figure 210: DC testbench schematic for LVT and SLVT NFET characterization.
+To compare the behaviour of the LVT and SLVT devices, two standard DC sweeps are performed using the same bias sets as in Section 2.4, and the results are evaluated at several points of interest:
+* Transfer characteristic (ID - VGS): VDS equal to {0.05V, 0.3V, 0.6V, 0.8V, and 0.9V}.
+* Output characteristic (ID – VDS): VGS equal to {0.1V, 0.4V, 0.6V, 0.8V, and 0.9V}.
+For all plots in this work, SLVT devices are shown with dash–dot–dot lines, while LVT devices are shown with solid lines. Unless otherwise stated, all graphs correspond to the reference geometry (W/L = 0.17µm/0.02µm); the baseline NFET is reported only in Section 2.4 to avoid overloading the figures.
+Figure 2.11 plots the transfer characteristics and shows that the SLVT device conducts more current than the LVT device for the same VGS across the entire sweep, with the largest differences observed in the subthreshold and moderate-inversion regions. This behaviour is consistent with SLVT’s lower effective threshold voltage: the SLVT curves are shifted to lower VGS (left) relative to LVT, indicating that a smaller gate voltage is required to reach the same drain current level.
+
+Figure 211: LVT and SLVT NFET transfer characteristic, ID - VGS with stepped drain bias.
+Figure 2.12 plots the output characteristics and confirms the higher drive capability of the SLVT option. For any given VGS, the SLVT curves exhibit higher drain current across the full VDS range. In the low- VDS region, this appears as a steeper slope (lower effective channel resistance), while at higher VDS the SLVT device maintains a higher saturation current. These trends are consistent with SLVT being the higher-performance option and are reflected in the extracted IdSat values.
+Additionally, a finite slope of ID versus VDS is observed in saturation for both options, indicating channel-length modulation. Differences in this saturation-region slope correspond to differences in output conductance (gds) and thus intrinsic gain; this effect is quantified separately through gm and gds extraction at a defined operating point.
+
+Figure 212: LVT and SLVT NFET output characteristic, ID - VDS with stepped gate bias.
+To provide a compact numerical comparison, the same DC parameter-extraction flow described in Section 2.4 is applied to both LVT and SLVT devices. VthLin, VthSat, IdSat, Idoff, gm, and gds are extracted using identical bias definitions, enabling a direct, technology-consistent comparison between the two options.
+
+Electrical
+ParameterW
+(µm)L 
+(µm)22FDX-PLUS (T=25ºC)LVTNFETSLVTNFETTTFFSSTTFFSSVthLin 
+[mV]0.170.02401.1343462.4294237.73490.170.024405.9350.5463297.4244.3348.80.50.02395351.9439.2277.1235.1318.1108479.7452.8506.3336.9311362.40.080.02410.3335.2488.5319.7247.6389.6VthSat 
+[mV]0.170.02329.1256.4409.4224.1154.5289.40.170.024347.7282.6418.5243.4181.8301.90.50.02320266.7377.7204.3152.3253.5108468.6441.8495.1328302.1353.40.080.02342.8249.9446.7254.1166.1336.4IdSat 
+[µA/µm]0.170.02655.1848.1451923.51.111e3732.40.170.024602.2776421.7870.11.037e3698.60.50.02648.6785.1501.89261.052e3787.41082.4993.0572.0256.6817.7945.710.080.02680.2943.4408.9924.21.176e3676.6IdOff 
+[A/µm]0.170.021.70e-091.46e-081.60e-103.32e-082.47e-074.81e-090.170.0245e-103.72e-096.08e-111.07e-087.05e-081.77e-090.50.022.19e-091.09e-083.82e-106.28e-082.76e-071.48e-081082.58e-127.24e-122.82e-136.35e-121.17e-116.32e-130.080.021.16e-091.77e-086.36e-111.18e-081.63e-079.77e-10gm 
+[µA/V/µm]0.170.021.17e+031.30e+031.00e+031.25e+031.36e+031.12e+030.170.0241.07e+031.19e+039.26e+021.16e+031.26e+031.04e+030.50.021.13e+031.21e+031.00e+031.19e+031.26e+031.10e+031084.55e+004.66e+004.39e+005.50e+005.66e+005.34e+000.080.021.25e+031.42e+031.01e+031.32e+031.49e+031.15e+03gds 
+[µA/V/µm]0.170.029.38e+011.30e+025.20e+011.00e+021.34e+027.21 e+010.170.0246.78e+019.15e+013.99e+016.95e+019.14e+015.12e+010.50.029.41e+011.19e+026.46e+011.00e+021.23e+027.97e+011086.68e-036.98e-036.12e-036.69e-037.37e-036.09e-030.080.029.40e+011.43e+023.83e+019.89e+011.45e+026.39e+02Table 26: Extracted DC parameters for LVTNFET and SLVTNFET.
+The extracted parameters in Table 26 confirm the trends observed in the transfer and output characteristics: compared to LVTNFET, SLVTNFET devices exhibit substantially lower threshold voltages and higher drive current, at expense of a significant increase in off-state leakage.
+For the reference geometry (W/L = 0.17µm/0.02µm), the extracted saturation threshold voltage (VthSat) decreases from 329.1/256.4/409.4 mV (LVT, TT/FF/SS) to 224.1/145.5/289.4 mV (SLVT, TT/FF/SS), corresponding to reductions of approximately 105 mV (TT), 111 mV (FF), and 120 mV (SS). A similar reduction is observed for VthLin, indicating that SLVT consistently shifts the device characteristics toward lower-VGS operation across drain-bias conditions.
+This lower threshold translates into higher ON current. For the reference geometry (W/L = 0.17µm/0.02µm), IdSat increases from 655.1/848.1/451?µA/µm (LVT, TT/FF/SS) to 923.5/1.111×10³/732.4?µA/µm (SLVT, TT/FF/SS), i.e., an increase of approximately +41% (TT), +31% (FF), and +62% (SS). The same trend is maintained across the additional geometries reported, with SLVT providing the highest drive current in all corners.
+As expected, the performance benefit is accompanied by a strong leakage penalty. For the same geometry, the extracted off-state current (Idoff) rises from (1.70×10??)/(1.46×10??)/(1.60×10?¹?) A/µm (LVT, TT/FF/SS) to (3.32×10??)/(2.47×10??)/(4.81×10??) A/µm (SLVT, TT/FF/SS), corresponding to roughly ×19.5 (TT), ×16.9 (FF), and ×30 (SS) higher leakage. Therefore, while SLVT improves speed (higher IdSat, lower VT), it requires careful consideration of standby power, particularly in the FF and TT corners where Idoff is highest.
+As a second reference point, the same comparison can be repeated for a wider device (W/L = 0.5µm/0.02µm), showing that the SLVT-LVT trends are maintained beyond the minimum-width case. For this geometry, the extracted VthSat decreases from 320/266.7/377.7?mV (LVT, TT/FF/SS) to 204.3?mV/152.3/253.5?mV (SLVT, TT/FF/SS), corresponding to a reduction of approximately 116?mV (TT), 114?mV (FF), and 124?mV (SS). A similar shift is observed for VthLin, confirming a consistent threshold shift across drain-bias conditions. 
+This threshold reduction produces a clear increase in ON current. The extracted IdSat increases from 648.6/785.1/501.8?µA/µm (LVT, TT/FF/SS) to 926/1.052×10³/787.4?µA/µm (SLVT, TT/FF/SS), i.e., approximately +43% (TT), +34% (FF), and +57% (SS).
+The leakage penalty remains significant. For (W/L = 0.5µm/0.02µm), the extracted off-state current (Idoff) increases from (2.19×10??/(1.09×10??)/(3.82×10?¹?) A/µm (LVT, TT/FF/SS) to (6.28×10??)/(2.76×10??)/(1.48×10??) A/µm (SLVT, corresponding to roughly ×28.7 (TT), ×25.3 (FF), and ×38.7 (SS) higher leakage. Overall, these wide-device results reinforce that SLVT consistently improves drive strength and reduces threshold voltage, but at the cost of a significant increase in off-state current across all corners.[JC10]
+2.5.1.1 LVT vs. SLVT NFET capacitances. 
+To complete the LVTNFET–SLVTNFET comparison, gate-related capacitances are extracted to quantify switching-relevant parasitics. In particular, Cgg captures the dominant input loading, while Cgd accounts for Miller coupling and can affect edge rate, feedthrough, and timing. The individual components (Cgs, Cgd, and Cgb) are also reported to confirm consistent gate-capacitance partitioning:
+C_gg?C_gs+C_gd+C_gb
+Capacitances are evaluated at the same ON-state operating point used in Section 2.4.4, (VGS = VDS = VDD = 0.8 V), (VBS = 0 V). Results are reported for the reference geometry (W/L = 0.17µm/0.02µm) across TT, FF, and SS corners at 25ºC.
+Parameter
+[Unit]22FDX-PLUS (T=25ºC)LVTNFETSLVTNFETTTFFSSTTFFSSCgg [aF]176176.1174.7179.9180.2179.1Cgs [aF]121.4123.6117.5122.2125118.9Cgd [aF]52.3550.6554.5455.8953.7557.83Cgb [aF]2.261.922.711.811.422.29Cgc INV [fF/µm]1.1881.1761.1981.2021.1841.218Cov [fF/µm/side]0.3280.3210.3361.3380.3300.348Table 27: Parasitic capacitances for LVT and SLVT NFET devices.
+The extracted capacitances Table 27 indicate that SLVTNFET exhibits a slightly larger total gate capacitance than LVTNFET across all corners. Specifically, Cgg increases from 176.0–174.7 aF (LVT, TT–SS) to 179.9–179.1 aF (SLVT, TT–SS), i.e., a modest ~2–3% increase. 
+Looking at the partitioned capacitances, the increase is mainly associated with Cgd, which rises from 52.35–54.54 aF (LVT) to 55.89–57.83 aF (SLVT), while Cgs remains of comparable magnitude (differences of a few aF depending on corner). The back-gate component Cgb is comparatively small in all cases (?1–3 aF), but shows some corner dependence. The reported values also satisfy the expected consistency, i.e., (C_gg?C_gs+C_gd+C_gb) within rounding error. 
+Overall, SLVTNFET achieves the expected performance gain but with a small capacitive penalty: Cgg increases by only ~2–3%, largely driven by a higher Cgd (Miller component), while the inversion-related term Cgc INV remains similar between options. The extracted Cov is also higher for SLVT across corners, suggesting increased overlap/fringing contribution, which is consistent with the observed Cgd increase. In practice, this added input/Miller loading can slightly reduce speed gains in heavily loaded nodes and marginally increase dynamic power.[JC11]
+2.5.2 LVT vs. SLVT PFET characterization.
+This section extends the threshold-option comparison to PFET devices by characterizing and contrasting the LVT (lvtpfet) and SLVT (slvtpfet) variants using the same DC methodology described in Section 2.4 and previously applied to NFET options in Section 2.5.1. The testbench topology is presented in Figure 2.13: independent DC sources bias the gate and drain terminals, while the source and bulk are tied to the well potential (for PFET, (VSB = VDD), i.e., (VSB = -0.8 V). Device geometry (W/L) is parameterized, and a single-finger configuration (nf=1) is used to keep the comparison consistent across device options.
+
+Figure 213: DC testbench schematic for LVT and SLVT PFET characterization.
+Two sweeps are performed to capture the main operating regions:
+* Transfer characteristic (ID – VGS): the gate bias is swept while VDS is stepped across the same set of values used previously. Figure 2.14 shows the expected shift between threshold options for the reference geometry (W/L = 0.17µm/0.02µm): for the same VGS at fixed VDS, the SLVTPFET exhibits a higher drain current than the LVTPFET, indicating a lower effective threshold-voltage magnitude for the SLVT option. As VGS increases toward VDD, the separation between the curves reduces and both devices approach similar strong-inversion behaviour, although SLVT remains the higher-current device. 
+The stepped-VDS curves also highlight drain-bias sensitivity near threshold: increasing VDS increases ID for a given VGS, with a more pronounced separation at lower VGS. This behaviour is consistent with drain-induced barrier lowering (DIBL), which is typically more evident in lower-Vth options.
+
+Figure 214: LVT and SLVT PFET transfer characteristic, ID – VGS with stepped drain bias.
+* Output characteristic (ID – VDS): the drain bias is swept while VGS is stepped up to the nominal supply magnitude. Figure 2.15 confirms the increased drive capability of SLVTPFET. For each stepped VGS, SLVT delivers higher |ID| across the full VDS range. In the low- VDS region, SLVT exhibits a steeper slope, indicating a lower effective channel resistance at the same gate bias. As VDS increases both devices transition toward saturation while maintaining a consistent current offset in favour of SLVT. These trends are reflected in the extracted IdSat values. In addition, the finite slope in the saturation region motivates the subsequent comparison of gds (output conductance) extracted at the defined operating point. 
+
+Figure 215: LVT and SLVT PFET output characteristic, ID – VDS with stepped gate bias.
+Table 28 summarizes the extracted DC parameters for LVTPFET and SLVTPFET devices across TT, FF, and SS corners at 25 ºC. The reported metrics include VthLin and VthSat, the ON-state drive current (IdSat), the off-state leakage (Idoff), and the small-signal parameters gm, and gds. Results are provided for multiple (W, L) geometries to capture sizing dependence and to enable a consistent LVT–SLVT comparison under identical bias definitions.
+
+Electrical
+ParameterW
+(µm)L 
+(µm)22FDX-PLUS (T=25ºC)LVTPFETSLVTPFETTTFFSSTTFFSSVthLin 
+[mV]0.170.02-358.5-302.8-418.4-243.7-185.3-303.30.170.024-364.1-312.2-420.2-251.4-197.6-306.90.50.02-359.2-319.6-401.3-239.5-197.9-282.9108-380.9-347.1-416.4-246.8-215.4-280.60.080.02-361.9-288.5-441.6-264-188.9-340.4VthSat 
+[mV]0.170.02-285.9-219.8-359.5-172.2-107.8-240.40.170.024-305.8-246.7-371.1-194.4-134.2-2560.50.02-284.9-237.3-336.9-166.3-94-217.6108-374.2-340.6-409.4-240.9-209.7-274.50.080.02-292.2-206.2-388.7-195-109.5-281.3IdSat 
+[µA/µm]0.170.02532.4687368.3783.6948.76220.170.024479612.7337.3719.3862.7575.70.50.02425.6512327.7654.7770.2543.11081.922.531.424.455.763.340.080.02549.9771.5339839.41070.2607.6IdOff 
+[A/µm]0.170.022.25e-091.26e-083.4e-104.27e-082.43e-077.32e-090.170.0248.97e-104.33e-091.62e-101.66e-088.44e-083.18e-090.50.022.76e-099.32e-097.41e-105.42e-081.92e-071.47e-081082.79e-102.15e-093.59e-119.67e-114.52e-101.29e-110.080.021.49e-091.52e-081.21e-102.06e-082.04e-072.02e-09gm 
+[µA/V/µm]0.170.026.56e+027.42e+025.52e+027.12e+027.79e+026.32e+020.170.0245.71e+026.44e+024.88e+026.36e+026.97e+025.63e+020.50.025.39e+025.88e+024.73e+025.89e+026.44e+025.28e+021081.58e+001.69e+001.47e+001.86e+002.03e+001.69e+000.080.026.45e+027.56e+025.29e+027.55e+028.65e+026.37e+02gds 
+[µA/V/µm]0.170.025.24e+016.88e+013.43e+015.58e+016.97e+014.35e+010.170.0243.59e+014.58e+012.49e+013.87e+014.76e+013.08e+010.50.024.32e+015.32e+013.19e+014.70e+015.83e+013.74e+011084.55e-034.80e-034.30e-032.16e-032.29e-032.02e-030.080.025.42e+017.53e+013.26e+016.23e+018.07e+014.63e+01Table 28: Extracted DC parameters for LVTPFET and SLVTPFET.
+The extracted parameters in Table 28 confirm the qualitative trends observed in the transfer and output characteristics: compared to LVTPFET, SLVTPFET devices exhibit a reduced threshold-voltage magnitude and higher drive current, with a large penalty in off-state leakage.
+For the reference geometry (W/L = 0.17µm/0.02µm), the extracted saturation threshold voltage (VthSat) shifts from (-285.9/-219.8/-359.5) mV (LVT, TT/FF/SS) to (-172.2/-107.8/-240.4) mV (SLVT, TT/FF/SS). In terms of threshold magnitude, this corresponds to a reduction of approximately 114 mV (TT), 112 mV (FF), and 119 mV (SS). A similar shift is observed for VthLin, indicating a consistent threshold reduction under both linear and saturation drain-bias conditions.
+This threshold reduction increases ON current. For the same geometry, IdSat increases from 532.4/687.0/368.3 µA/µm (LVT, TT/FF/SS) to 783.6/948.7/622.0 µA/µm (SLVT, TT/FF/SS), i.e., approximately +47% (TT), +38% (FF), and +69% (SS).
+As expected, leakage increases substantially. The extracted off-state current (Idoff) rises from 2.25×10??/1.26×10??/3.4×10?¹? A/µm (LVT, TT/FF/SS) to 4.27×10??/2.43×10??/7.32×10?? A/µm (SLVT, TT/FF/SS), corresponding to roughly ×19.0 (TT), ×19.3 (FF), and ×21.5 (SS) higher leakage. Therefore, while SLVT PFET options provide a clear performance advantage (higher (IdSat) and lower (|Vth|)), they also require careful management of standby power.
+2.5.2.1 LVT vs. SLVT PFET capacitances.
+To complete the LVTPFET-SLVTPFET comparison, Table 29 summarizes the extracted PFET gate capacitances at 25ºC for the reference geometry (W/L = 0.17µm/0.02µm) across TT, FF, and SS corners. Cgg is reported as the primary input-loading metric, together with its partitioned components Cgs, Cgd (Miller), and Cgb. The component values satisfy Cgg ? Cgs + Cgd + Cgb within rounding error, confirming extraction consistency.
+Parameter
+[Unit]22FDX-PLUS (T=25ºC)LVTPFETSLVTPFETTTFFSSTTFFSSCgg [aF]195.4194.2196199.2197.6200.4Cgs [aF]127.9128.9126.3130.9131.1130.2Cgd [aF]66.1864.3568.2467.465.869.03Cgb [aF]1.220.961.540.900.691.16Cgc INV [fF/µm]1.2391.2241.2511.2511.2331.267Cov [fF/µm/side]0.4080.3990.4180.4120.4040.420Table 29: Parasitic capacitances for LVT and SLVT PFET devices.
+Overall, Table 29 shows that SLVTPFET has a modestly higher total gate capacitance (Cgg) than LVTPFET across all corners: LVTPFET (Cgg ? 195.4/194.2/196.0) aF (TT/FF/SS) versus SLVTPFET (Cgg ? 199.2/197.6/200.4) aF, i.e. an increase of ~2.1% (TT), ~1.8% (FF), and ~2.2% (SS). This is consistent with the partitioned values: Cgg increases slightly (127.9/128.9/126.3 ? 130.9/131.1/130.2 aF), while Cgd also rises in TT and SS (66.18/64.35/68.24 ? 67.40/65.80/69.03 aF), implying a minor increase in both input loading and Miller coupling. The body component Cgb remains small for both options (?0.7–1.5 aF) and does not materially affect the comparison.
+Using the model-decomposed terms, the inversion-related width-normalized capacitance (Cgc, INV) is only slightly higher for SLVT (1.251/1.233/1.267 fF/µm) than for LVT (1.239/1.220/1.251 fF/µm), indicating that the intrinsic strong-inversion gate-channel contribution is broadly similar between threshold options. By contrast, Cov is consistently higher for SLVT (0.412/0.404/0.420 fF/µm/side vs. 0.408/0.399/0.418 for LVT), suggesting a small but systematic increase in overlap/fringing parasitics. 
+In summary, SLVT improves drive strength and gm but substantially increases Idoff, while capacitance penalties remain modest. These extracted trends directly impact current-mirror performance through output resistance gds, bias efficiency gm, and leakage, motivating the mirror and mismatch study in Section 2.6.
+2.6 Current mirror, mismatch characterization.
+To conclude Chapter 2, a current mirror is implemented and simulated to quantify device mismatch in the 22FDX technology. Current mirrors are widely used as bias generators in analog and mixed-signal circuits, and their accuracy is fundamentally limited by random mismatch between nominally identical transistors. Evaluating current-mirror mismatch therefore provides a practical circuit-level measure of matching performance, complementing the single-device DC characterization presented in the previous sections.
+In addition to the large-signal and small-signal device characterization, random mismatch is a key limitation in high-precision analog design and often trades off with other performance parameters such as speed, leakage, and area. Even when two transistors are designed with identical geometry and placed in close proximity, microscopic process variations introduce random deviations in electrical parameters. As discussed in standard analog design literature, these imperfections manifest primarily as device mismatch and—together with nonlinearity—are among the main non-idealities that bound achievable accuracy in practical circuits (e.g., current sources, bias networks, and data converters) [15].
+
+Figure 216: Random mismatches due to variations in device dimensions.
+As illustrated in Figure 2.16 (reproduced from [15]), microscopic variations in device dimensions and material properties lead to random parameter deviations even for adjacent, identically drawn transistors. Accurate current matching is fundamental for IDAC unit elements and bias networks[16]; in current-steering DACs, unit-current mismatch directly increases DNL/INL and therefore limits achievable static linearity [7]. Although increasing device area improves matching, it increases parasitic capacitances and can limit highfrequency performance. As a common rule of thumb, quadrupling transistor area improves matching by roughly one bit, illustrating why extremely high-resolution matching requirements are impractical to satisfy by sizing alone [17].
+A widely used insight is that larger device area reduces random mismatch through statistical averaging. In particular, Pelgrom’s model relates the standard deviation of threshold mismatch between two closely spaced, identically laid out transistors to device area [12]:
+?(?V_TSat)?A_(??V?_thSat )/?(W?L)
+Where ?(?V_tSat )  is the standard deviation of the threshold-voltage mismatch (expressed using the VthSat definition), W and L are the transistor dimensions, and A_(??V?_thSat )  is the Pelgrom coefficient (units: V·m). The key design insight is therefore: 
+* Larger device area (W·L) yields lower mismatch, approximately scaling as (1/?(W·L)).
+* Smaller ?VthSat means better intrinsic matching technology, since less area is required to reach a given mismatch target.
+Published GlobalFoundries data indicates that 22FDX exhibits lower VthSat mismatch (lower ?V_thSat) compared with common industry reference nodes (e.g., 28 nm HKMG and 40 nm LP), supporting its suitability for analog blocks that rely on well-matched devices (e.g., current sources and mirror arrays). 
+Finally, the operating point also influences how threshold mismatch translates into current error. In saturation, ID depends strongly on the effective overdrive (VGS - VTH); therefore, operating with larger gate overdrive reduces the relative sensitivity of the drain current to random Vth variations and improves current-source matching [7]. For these reasons, current sources in high-accuracy DACs are typically implemented with longer-channel devices and biased in saturation [5].
+2.6.1 Testbench description. 
+To quantify mismatch at circuit level, a basic two-transistor current mirror is implemented. One transistor is diode-connected to establish the reference current IREF, and the second, nominally identical transistor generates the mirrored current IOUT. The devices use identical geometry (same W, L, and number of fingers) and are biased in saturation with sufficient compliance voltage to ensure proper operation. In the ideal case, IOUT = IREF; in practice, random mismatch introduces a mirror gain error between the two currents. In this work, the testbench is implemented for LVTNFET and LVTPFET devices, and the same procedure is repeated for SLVT options to assess how reduced Vth impacts matching and leakage.
+Figure 2.17 shows the current-mirror testbench used in this work for both NFET (left) and PFET (right) devices. An ideal DC current source (IDC) forces the reference current into the diode-connected device (N0/P0), whose gate and drain are shorted to generate the bias voltage (VG) such that (IREF ? IDC). The same gate node is then applied to a second, nominally identical device (N1/P1), producing the mirrored current (IOUT).
+To ensure both transistors operate under comparable drain bias, a unity-gain VCVS is used to enforce (?V_D?_0??V_D?_1) (with the VCVS output limited to 0.8 V to maintain compliance). With both devices sharing the same (VGS) and approximately the same (VDS), deviations between IOUT and IREF are primarily attributed to random device mismatch.
+Device dimensions W and L are parameterized, with a single finger (nf=1). The bulk is tied to the source for NFET (VB = 0 V) and tied to VDD for PFET, consistent with the biasing used throughout this chapter.
+Figure 217: LVTNFET and LVTPFET current-mirror testbench.
+2.6.2 Monte Carlo reports.
+In this work, current-mirror mismatch is quantified using the standard deviation of the mirrored output current. For each Monte Carlo run, the drain current of the output device; N1 for NFET or P1 for PFET is recorded. For every (W, L) geometry and each (IDC) bias point, 200 Monte Carlo samples are simulated. The simulator uses the standard Monte Carlo method with the variation option set to “All,” so that all enabled statistical variability mechanisms provided by the PDK are included in the runs.
+Tables 210 and 211 report the standard deviation obtained for NFET current-mirror devices (LVT and SLVT options) at nominal temperature (25 ºC), for an IDC sweep from 100 µA to 500 µA in 50 µA steps, and for progressively larger geometries while keeping the aspect ratio (W/L) constant (from 1 µm/20 nm to 16 µm/320 nm). In general, the results follow the expected trends: the absolute spread (?? I?_OUT) increases with IDC, whereas the relative deviation (? (%)) decreases as IDC increases (i.e., the mirror becomes relatively more accurate at higher bias). In addition, increasing device area from 1?µm/20?nm to 8?µm/160?nm reduces mismatch, consistent with Pelgrom-type behaviour.
+However, the largest device (16?µm/320?nm) does not continue this improvement and shows higher ? than the 8?µm/160?nm case. Since this size exceeds the PDK’s recommended maximum device width, the result should be treated with caution: it likely reflects operation outside the model’s intended geometry range rather than a true reversal of Pelgrom scaling. In this setup and bias range, the apparent non-monotonic behaviour may also be influenced by secondary effects such as operating-point sensitivity, non-idealities in the enforced VD matching condition, or model/extraction limits for very large geometries.
+LVTNFET (W / L)IDC [µA]1?m/20nm2?m/40nm4?m/80nm8?m/160nm16?m/320nm? (?A)? (%)? (?A)? (%)? (?A)? (%)? (?A)? (%)? (?A)? (%)10014.4914.499.509.57.177.176.856.857.877.8715018.1012.0612.138.099.276.188.895.9310.236.8220020.9310.4614.307.1511.065.5310.645.3212.266.1325023.289.3116.146.4512.635.0512.194.8714.075.6230025.298.4317.755.9114.054.6813.604.5315.715.2335027.077.7319.185.4815.344.3814.904.2517.234.9240028.667.1620.465.1116.534.1316.104.0218.654.6645030.116.6921.634.817.633.9117.223.8219.984.4450031.466.2922.714.5418.663.7318.283.6521.244.24Table 210: LVTNFET current-mirror output-current mismatch.
+SLVTNFET (W / L)IDC [µA]1?m/20nm2?m/40nm4?m/80nm8?m/160nm16?m/320nm? (?A)? (%)? (?A)? (%)? (?A)? (%)? (?A)? (%)? (?A)? (%)10011.2111.218.368.366.456.456.236.237.277.2715013.869.2410.627.088.345.568.115.419.496.3320015.897.9512.436.229.934.979.724.8611.415.7125017.517.0013.955.5811.324.5311.144.4613.115.2430018.866.2915.255.0812.554.1812.424.1414.654.8835020.005.7116.384.6813.663.913.603.8916.074.5940021.005.2517.394.3514.683.6714.683.6717.404.3545021.874.8618.294.0615.613.4715.703.4918.644.1450022.664.5319.103.8216.473.2916.653.3319.813.96Table 211: SLVTNFET current-mirror output-current mismatch.
+Looking at Table 211 for the same (W/L) and IDC, SLVT NFETs exhibit slightly lower ? I_OUT and ? (%) than the LVT option, indicating marginally improved current matching over the bias range considered. The same non-monotonic behaviour is still observed for the 16?µm/320?nm case, which is outside the recommended geometry range and is therefore treated cautiously.
+To complete this section, PFET current-mirror mismatch results are summarized in Tables 212 and 213 for LVT and SLVT devices at (25 ºC). The PFET mirrors show the same dependence on bias current and device area observed for NFETs (|? I_OUT |) increasing with IDC and relative ? (%) decreasing with IDC. Comparing LVT and SLVT PFET options at identical (W/L) and IDC further highlights the impact of threshold-voltage option on current matching.
+PFET mirror mismatch results follow the same general behaviour observed for NFETs. Increasing device area reduces mismatch up to the 8?µm/160?nm geometry, consistent with Pelgrom-type scaling, whereas the 16?µm/320?nm case again shows non-monotonic behaviour and is treated cautiously since it exceeds the recommended maximum width range.
+
+LVTPFET (W / L)IDC [µA]1?m/20nm2?m/40nm4?m/80nm8?m/160nm16?m/320nm? (?A)? (%)? (?A)? (%)? (?A)? (%)? (?A)? (%)? (?A)? (%)10010.1910.196.956.955.705.706.336.338.028.0215012.578.388.595.737.304.878.185.4510.396.9320014.617.39.864.938.624.319.754.8812.396.1925016.606.6410.834.339.753.911.134.4514.175.6730018.596.2011.733.9110.633.5412.364.1215.785.2635020.535.8712.573.5911.413.2613.513.8617.294.9440021.875.4713.453.3612.083.0214.473.6218.634.6645023.445.2114.143.1412.682.8215.383.4219.854.4150025.195.0414.852.9713.132.6316.233.2521.024.20Table 212: LVTPFET current-mirror output-current mismatch.
+SLVTPFET (W / L)IDC [µA]1?m/20nm2?m/40nm4?m/80nm8?m/160nm16?m/320nm? (?A)? (%)? (?A)? (%)? (?A)? (%)? (?A)? (%)? (?A)? (%)1008.928.926.486.484.894.895.235.236.566.5615010.627.087.975.316.304.206.774.518.495.6620012.026.019.064.537.453.738.094.0510.165.0825013.135.259.903.968.433.379.263.7011.654.6630014.074.6910.673.569.273.0910.293.4313.044.3535014.944.2711.143.189.995.8511.243.2114.234.0740015.763.9411.632.9110.642.6612.113.0315.373.8445016.533.6712.072.6811.132.4712.902.8716.443.6550017.383.4812.472.4911.582.3213.632.7317.443.49Table 213: SLVTPFET current-mirror output-current mismatch.
+To finish, Figure 2.18 and 2.19.plot the relative current-mirror mismatch for all evaluated device pairs, expressed as (? (%)), as a function of the imposed reference current (IDC). Each curve corresponds to one geometry (constant (W/L) while scaling area), and compares LVT (solid) versus SLVT (dashed) options for the same dimensions. The plots provide a compact visualization of the main trends extracted from Tables 210 to 213: ? (%) decreases with increasing IDC (improved fractional matching at higher bias), and mismatch generally improves with increasing device area up to the 8?µm/160?nm case, while the 16?µm/320?nm geometry shows the same non-monotonic behaviour discussed previously.
+
+Figure 218: NFET current-mirror relative mismatch for LVT and SLVT devices.
+
+Figure 219: PFET current-mirror relative mismatch for LVT and SLVT devices.
+This chapter links the extracted mismatch statistics to their circuit-level impact. In IDAC arrays, unit-current mismatch directly limits achievable static linearity by increasing DNL/INL. In bias networks, mismatch reduces bias accuracy and can shift device operating points, indirectly affecting timing margins and overall performance. The chapter concludes by assessing whether the observed mirror gain error is primarily dominated by random device mismatch at the selected geometries and bias conditions.
+For additional context, and to close the chapter, GlobalFoundries reports Pelgrom-style mismatch metrics for 22FDX that are improved relative to a 40LP reference node for both NFET and PFET devices (Figure 2.20) [12]. The reported values suggest lower intrinsic threshold-related mismatch in 22FDX, consistent with the qualitative trends discussed in this chapter. This comparison is included as a benchmark; the absolute mismatch observed in this work also depends on the chosen device geometry, bias point, and the specific Monte Carlo/statistical options enabled in the simulator.
+
+Figure 220: Vendor-reported 22FDX FET mismatch comparison versus a 40LP reference node.
+
+Chapter 3. Flip-Flop design.
+This chapter presents the main work of this thesis: the design, device-level characterization, and circuit-level simulation and verification of three flip-flop topologies in 22FDX technology. Flip-flops are fundamental sequential elements used in digital logic and in timing and synchronization blocks. Conceptually, a flip-flop can be interpreted as a one-bit memory element whose state is updated under clock control. Because sequential circuits inherently require storage, the selection and implementation of flip-flop structures directly impact speed, power consumption, robustness, and sensitivity to process and mismatch variability.
+Memory elements can be classified according to the physical mechanism used to store information. In static storage, data is retained through bistability created by positive feedback (typically using cross-coupled CMOS inverters), enabling indefinite retention as long as the supply is present. In dynamic storage, information is stored as charge on a capacitance; this approach can reduce area and sometimes improve speed, but retention time is limited by leakage and noise and therefore depends on process, voltage, and temperature (PVT) conditions. A basic example is shown in Figure 3.1, which illustrates a capacitor-based storage cell from [18].
+
+Figure 31: Storage capacitor.
+The chapter is organized as follows. Section 3.1 reviews latch operation, establishing the intuition needed to interpret timing and robustness limitations. Section 3.2 introduces the basic circuit elements used throughout the designs—transmission gates and CMOS inverters—and discusses their role in signal transfer and state retention. Section 3.3 discusses registers/flip-flops from both static and dynamic storage perspectives and then presents the three implemented flip-flop topologies, describing their internal nodes and operation across clock phases. Finally, Section 3.4 details the simulation methodology and characterization metrics used in this work, including PVT analysis, clock-to-Q delay, setup/hold time, jitter sensitivity, metastability/MTBF, and power consumption.[JC12]
+3.1.1 Latches as the building block.
+Flip-flop architectures are most easily understood from a latch perspective. Most practical flip-flops are built from latches, with edge-triggered behaviour commonly obtained using a master–slave architecture: two latches are cascaded and controlled by complementary clock phases so that data is sampled in one phase and transferred to the output in the other. For this reason, understanding latch operation—transparency, regeneration, and the conditions that lead to metastability—is essential to analyse key flip-flop metrics such as clock-to-Q delay, setup/hold time, jitter sensitivity, and metastability robustness [19]. In the following sections, the latch-level building blocks used in the implemented designs are introduced, followed by a description of each flip-flop topology and its operation across clock phases.
+Latches can be classified according to the active level of the enable (clock) signal into active-high and active-low latches. A latch operates in two modes: transparent and opaque (hold). When the latch is transparent, the output follows the input, i.e., (Q ? D). When the latch is opaque, the sampling path is disabled and the latch retains the last value of D captured during the active phase, thereby behaving as a memory element.
+Figure 3.2 illustrates both cases. An active-high latch is transparent when (CLK = 1) and opaque when (CLK = 0). Conversely, an active-low latch is transparent when (CLK = 0) and opaque when (CLK = 1). The timing diagrams show the corresponding input–output behaviour for each latch type.
+
+Figure 32: Active-high and active-low latch behaviour.
+A level-sensitive latch can be conveniently interpreted as a 2:1 multiplexer with feedback, where the select line is the clock (or enable) signal. For an active-high latch, when (CLK = 1) the latch is transparent and the multiplexer selects the data input D, so (Q ? D). When (CLK = 0), the latch enters the hold phase and the multiplexer selects the feedback path, recycling the previously stored output value (Qold) so that the output is maintained.
+In a practical circuit, this “memory” action cannot be implemented with a passive wire alone, because during the hold phase the stored node must be actively driven to a valid logic level in the presence of leakage and noise. Robust static storage is therefore obtained using two cross-coupled CMOS inverters, which form a bistable element through positive feedback, as illustrated in Figure 3.3.
+
+Figure 33: Latch interpretation using (left) a 2:1 multiplexer with feedback and (right) a static storage element implemented with cross-coupled inverters.
+To make the latch transparent when (CLK = 1), the input D is conditionally connected to the internal storage node through an input switch S1 (Figure 3.4). If the feedback path were left enabled during this phase, the input driver would contend with the cross-coupled inverter pair, increasing effective loading, slowing transitions, and potentially preventing the internal node from being overwritten. To avoid this contention, a second switch, S2, is inserted in the feedback path and driven by the complementary clock ((clk) ?), so that the feedback is disabled when the latch is transparent and enabled during hold.
+An additional inverter is placed before S1 to preserve a non-inverting transfer characteristic at the latch level ((Q ? D) when transparent), while also buffering the input as it forces the bistable core to a new state.
+
+Figure 34: Active[JC13]-high latch implementation using gated input and gated feedback.
+As a result, the latch operates in two non-overlapping configurations:
+* Transparent mode (CLK = 1): S1 ON and S2 OFF, so the input path is enabled and Q tracks D. The corresponding equivalent circuit is show in Figure 3.5 (a).
+* Hold mode (CLK = 0): S1 OFF and S2 ON, so the input is isolated and the cross-coupled inverters preserve the last stored value. The corresponding equivalent circuit is shown in Figure 3.5 (b).
+
+Figure 35: Equivalent circuits of an active-high latch in (a) transparent mode and (b) hold mode.
+The ideal switches (S1) and (S2) are implemented using MOS devices (NMOS, PMOS, or CMOS transmission gates). The next section discusses switch implementations and motivates the use of transmission gates to ensure fullswing signal transfer.
+3.2 Basic structures inside a latch.
+At the circuit level, latches and flip-flops can be decomposed into two fundamental building blocks: switching elements that control when data is sampled, and restoring elements that preserve and regenerate logic levels. Although a switch can be implemented using a single NMOS or PMOS device, practical latch designs commonly employ CMOS transmission gates to pass both logic ‘0’ and logic ‘1’ with reduced signal degradation and improved noise margin. The storage function is typically implemented using CMOS inverters, either as a static bistable element (cross-coupled inverters) or as a restoring stage associated with a dynamic storage node.
+3.2.1 Transmission gate (T-gate) as a switch.
+A MOS switch can be implemented using a single NMOS or PMOS device; however, a single pass transistor does not transfer full logic swing. An NMOSonly pass device conducts a strong logic ‘0’, but when passing a logic ‘1’ the output typically saturates around (VDD – Vth, n), because the channel turns off as VGS approaches Vth, n. Conversely, a PMOSonly pass device conducts a strong logic ‘1’, but degrades a logic ‘0’ and may stop near (|Vth, p|) above ground [2]. This threshold-drop behaviour can be observed in Figure 36.
+
+Figure 36: Pass transistor strong and degraded outputs.
+To avoid this thresholddrop limitation, latches commonly use a CMOS transmission gate (Tgate), formed by an NMOS and PMOS in parallel. When enabled, the NMOS provides low resistance path for lowlevel transmission, while the PMOS provides a low resistance path for highlevel transmission. As a result, the internal node can be driven close to both rails (0 and VDD) reducing signal degradation and improving noise margins. 
+Proper operation requires complementary control signals (CLK) and ((CLK) ?), ensuring that the NMOS and PMOS are either both ON or both OFF simultaneously. In master–slave and feedbackbased latch structures, clock generation typically enforces nonoverlap between complementary phases to prevent unintended transparent windows and to avoid momentary contention paths between the input and the feedback network. The complementary gating and full-swing transfer provided by a transmission gate are illustrated in Figure 37.
+
+Figure 37: Transmission gate outputs.
+Finally, although NMOS devices typically provide higher electron mobility (and therefore lower on-resistance for a given size), they also tend to exhibit stronger sensitivity to process and mismatch variations. Using both NMOS and PMOS devices in a transmission gate exploits the complementary conduction strengths of each device polarity and helps preserve full-swing operation across PVT.
+
+3.2.2 The inverter inside a latch. 
+The CMOS inverter is the fundamental restoring element in latch and flip-flop design. While the transmission gate controls when a node is sampled, the inverter determines how that node is regenerated to a valid logic level, provides gain for noise suppression, and ultimately sets key timing parameters such as propagation delay.
+A CMOS inverter, illustrated in Figure 38, is formed by a PMOS pull-up device and an NMOS pull-down device connected in series between VDD and ground, with a common input gate and a common output node. For a low input voltage (VIN ? 0), the PMOS is ON and the NMOS is OFF, so the output is pulled up to (VDD). For a high input voltage (VIN ? VDD), the NMOS is ON and the PMOS is OFF, so the output is discharged toward ground. In steady state, one of the two devices is ideally OFF, which leads to (approximately) zero DC static current, making CMOS inverters well-suited for storage elements that must retain state indefinitely in static latches [2].
+
+Figure 38: CMOS inverter schematic (left) and symbol (right).
+In latch topologies, inverters appear both as buffers (to restore signal levels after a switch) and as storage cores when two inverters are cross-coupled to create bistability and static state retention. The voltage transfer characteristic (VTC), (VOUT(VIN)), of an inverter captures their regenerative property, which exhibits a high-gain transition region where small input variations produce large output changes. This gain is the key mechanism that “cleans up” degraded or noisy internal nodes and improves robustness.
+A key parameter of the VTC is the switching threshold (VM) (often defined at (VIN = VOUT), which depends on the relative strength of the NMOS and PMOS devices. By sizing the PMOS wider than the NMOS (to compensate for lower hole mobility), designers typically target a near-symmetric VTC with (VM ? VDD/2), which improves noise margins and balances rising and falling delays. If the sizing ratio is skewed, VM shifts away from mid-supply, trading noise margin and timing symmetry for a preferred switching direction—sometimes useful in latch optimization, but generally undesirable for nominal logic robustness. This effect is illustrated in Figure 39, which presents a near-symmetric inverter transfer characteristic (VM ? VDD/2) with a skewed sizing case where VM is shifted away from mid-supply.
+Device sizing therefore impacts latch behaviour in two ways: it sets the inverter strength ratio (and thus the switching threshold VM and noise margins), and it also determines the effective drive strength and the capacitance presented to the previous stage. Increasing device widths reduces the pull-up/pull-down on-resistance and can improve speed for a fixed load, but it simultaneously increases gate and diffusion capacitances, raising the load seen by upstream nodes and increasing dynamic power. Consequently, inverter sizing involves a trade-off between robustness, delay, and switching energy—particularly important in flip-flops, where internal nodes and the clock network are heavily loaded. In the next subsections, these inverter properties are used to justify the chosen device sizing and to interpret timing and robustness trends observed in the implemented flip-flop topologies.
+
+Figure 39: Representative CMOS inverter DC transfer characteristics.
+3.3 Flip-flop design.
+In Section 3.1.1 latches were introduced as level-sensitive storage elements, and Section 3.2 reviewed the two key circuit primitives that implement them: the transmission gate (switching) and the CMOS inverter (restoring/storage). Building on these concepts, a flip-flop can be defined as a clocked storage element that samples its input only at discrete instants of time, typically on a clock edge, and holds the sampled value at its output for the remainder of the clock period.
+
+Figure 310: Master-slave flip-flop implemented by cascading two transmission-gate latches.
+A common implementation of an edge-triggered flip-flop is the master–slave configuration, obtained by cascading two level-sensitive latches that are enabled on opposite clock phases. In Figure 310, when (clk = 1) the master latch is transparent and tracks D while the slave latch is in hold, isolating the output. When (clk = 0), the master enters hold and the slave becomes transparent, transferring the previously stored value at Qi to the output Q. With complementary (and ideally non-overlapping) clocking, the two latches are never transparent at the same time, preventing race-through and yielding edge-triggered behaviour at Q.
+Figure 311 illustrates the timing of a master–slave flip-flop, showing how D is first sampled onto the internal node (Qi) during the master-transparent phase (blue-shaded region), and then transferred to the output (Q) during the slave-transparent phase (orange-shaded region) under complementary clocking (clk and clkb).
+
+Figure 311: Master-slave timing sketch (illustrative example[JC14]).
+As we have seen in Section 3.1.1, latches are level-sensitive: when their enable or clock signal is active, they are transparent and the output (Q) follows the input (D). This transparency can be beneficial in synchronous systems by allowing time borrowing, which can relax setup requirements across clock boundaries. However, it also demands careful control of enable periods and clock signals to prevent race conditions, where unintended changes in (D) can propagate through (Q) during the transparent interval.
+In contrast, a flip-flop is edge-triggered: the output (Q) updates only at a specific clock transition, typically the rising or falling edge. This edge-triggered characteristic greatly simplifies timing analysis and closure in synchronous designs, as signal sampling occurs at well-defined instants. However, implementing flip-flops generally requires higher area, increased power consumption, and greater clock loading compared to a single latch, since flip-flops are often built from two level-sensitive latch stages or equivalent internal circuitry.
+
+Latch vs flip-flop: timing viewpoint
+A latch is level-sensitive: when its enable/clock level is active it is transparent and (Q) can follow (D). This transparency can be beneficial for time borrowing in synchronous systems, but it also requires careful control of enable windows to avoid race conditions.
+A flip-flop is edge-triggered: (Q) updates only around the active clock edge, which simplifies timing closure in many synchronous designs by clearly separating sampling instants. In return, flip-flops generally incur higher area, power, and clock loading compared with a single latch, since they typically contain two latch-like stages (or equivalent internal circuitry).
+
+
+
+
+Static vs dynamic storage in sequential elements
+Flip-flops and latches can be classified by their storage mechanism:
+Static storage: the state is held by positive feedback, typically using cross-coupled inverters. The stored value can be retained indefinitely as long as power is applied, and the node remains actively driven to a valid logic level. Static designs are generally more robust to leakage and noise, at the cost of increased transistor count and internal capacitance.
+Dynamic storage: the state is stored as charge on a capacitance at an internal node, usually through a clocked switch (e.g., a transmission gate). Dynamic structures can be more compact and can achieve high speed due to reduced transistor count and smaller internal nodes. However, the stored charge is gradually lost due to leakage currents, so the state can only be held reliably for a limited time; dynamic nodes are also more sensitive to noise, charge sharing, and clock feedthrough. For this reason, dynamic sequential elements must be operated with clocking that ensures periodic refresh and avoids excessively long hold times.
+(Place your “TG + capacitor + inverter” dynamic latch sketch here.)
+Design trade-offs and studied topologies (bridge to your subsections)
+Different flip-flop topologies exist to meet specific speed, power, and robustness requirements, and the choice often depends on clock frequency, allowable clock loading, supply voltage, and noise/leakage constraints of the technology. In the following subsections, the flip-flop architectures considered in this work are presented and compared, highlighting their operating principle (static or dynamic), clocking requirements, and expected trade-offs in delay, power, and signal integrity.
+
+
+3.1.1 Static latch principle
+* Explain the crosscoupled inverter pair and why it holds state indefinitely (in ideal case).
+* Mention advantages: robustness to leakage, good noise margin.
+* Mention cost: larger area and input loading; static contention during switching depending on topology.
+3.1.2 Dynamic latch principle
+* Explain dynamic storage: logic state stored as charge on a node capacitance (C_{store}) (mostly parasitic).
+* Clarify what (C_{store}) physically is (drain diffusion + gate capacitance of next stage).
+* Mention key limitation: leakage causes voltage droop ? data retention time is finite.
+* This is the right place for your “single transmission gate + inverter” dynamic latch drawing and explanation.
+3.1.3 From latches to flipflops (master–slave)
+* A flipflop can be modeled as two latches in cascade driven by complementary clock phases.
+* Connect to timing concepts: sampling window, transparency, and why edgetriggering helps synchronous design.
+* Mention that latch understanding links directly to setup/hold, clocktoQ, and metastability.
+Keep this as a “what you implemented + why” section, not a long catalog.
+Example subsections (match your designs):
+* 3.3.1 TG-based master–slave D flipflop (static latches with TG)
+* 3.3.2 Alternative topology (your “loop change” / structural variation)
+* 3.3.3 Hybrid/dynamic style (if you truly implement it; if not, keep it as background only)
+For each topology, include:
+* a schematic,
+* a short operation description across clock phases,
+* expected pros/cons (area, speed, leakage sensitivity, clock loading).
+[JC15]
+
+
+
+
+[JC16]
+
+Explaining each structure comment opportunities of optimization. “and opportunities for optimization” With the structures comment advantages and disadvantages of each one
+D-flip with T-gates.
+This structure uses a pair of T-Gates for sampling and holding the input data, enabling edge-triggered operation.
+D flip-flop loop change. 
+Alternative design modifies the internal feedback of each latch. 
+In order to reduce the power of the FF while keeping competitive performance and similar cell area, we tried to reduce the transistor count, especially those operating with clock signals, without  introducing any dynamic or pre-charge circuit. In the conventional FF there are 12 clock-related transistors. To reduce clock-related transistor counts directly from this circuit is quite difficult. One reason is because transmission-gates need a 2-phase clock signal, thus the clock driver cannot be eliminated. Another reason is that transmission-gates should be constructed by both PMOS and NMOS to avoid degradation of data transfer characteristics caused by single-channel MOS usage. 
+D flip-flop with static CMOS and capacitors. (DYNAMIC ARCHITECTURE)
+This architecture introduces embedded capacitors or keeper circuits to enhance noise immunity and reduce dynamic power. 
+C2MOS logic, replace more complex latches four-transistor dynamic implementation. This approach, however, required two nonoverlapping clock phases to avoid transparency during (slow) clock transitions. [16] explanation and issue. 
+1. Tests
+Meter table de specs a cumplir, recuerda que el diseño: suitability for a driving current-steering DAC control logic (IDACs). (para justifcar todo)
+This maps to your “3.3 Tests” list; just rename it to sound like a method section.
+Suggested order:
+* 3.4.1 Testbench and measurement definitions
+o Define clock waveform (freq, rise/fall, duty cycle), input slew, output load.
+o Define measurement points precisely: (t_{CQ}), setup, hold, energy/cycle, static current, etc.
+* 3.4.2 PVT / corners
+* 3.4.3 ClocktoQ, setup/hold
+* 3.4.4 Jitter sensitivity (if you have a jitter injection method—otherwise keep brief)
+* 3.4.5 Metastability / MTBF method
+o Important: state what model you use (e.g., resolve time constant extraction, or direct transient around aperture).
+* 3.4.6 Power and leakage (including powerdown current)
+
+
+Verifications include device-level and circuit-level evaluations to ensure correct behaviour under PVT variations and high-speed operation conditions.
+3.3.1 T-Gate and Inverter, to characterize the devices
+.
+
+
+Characterization includes delay, leakage, voltage transfer curves, and noise margins. Corners (SS,TT,FF) and temperatures (-40ºC to 125ºC) are evaluated. 
+
+Inverter, variation of the load capacitance leads to a change in the delay and dynamic power, and the technology scaling results in an increase of delay; however, with a decrease in the dynamic power values [18].
+
+3.3.2 Flip-Flops.
+Dynamic: Conventional and advanced. And static using caps. 
+
+3.3.2.1 Corners and nominal. PVT. Understand how temperature can affect the performance of the devices. 
+Impact of process, supply voltage, and temperature variations are analysed. Higher temperatures increase leakage and delay.
+3.3.2.2 Jitter and Clock2Q.
+Clock-to-Q delay defines the response time of a flip-flop to a clock edge, while jitter introduces uncertainty in timing. 
+3.3.2.3 SetupTime
+Defined as the amount of time that the input hast to be stable at the input port before the active edge of the clock comes, in other words determines how early data must be stable before the clock edge to ensure proper capture.
+
+
+3.3.2.4 MTBF
+Look source: Impulse Sensitivity Function Analysis of Periodic Circuits.
+Mean Time Between Failure quantifies metastability robustness. Higher clock frequencies and small setup margins degrade MTBF.
+3.3.2.5 Current and powerdown current.
+Static and dynamic current consumption are evaluated, including sleep-mode leakage measurements.
+
+
+
+
+
+
+
+
+
+
+
+Chapter 4. Conclusions.
+This report outlines the fundamentals of IDAC architecture, device behavior at the 22nm node, flip-flop design concepts, and key testing methodologies. The performance and reliability of high-speed mixed-signal circuits depend strongly on device selection, layout strategy, and thorough PVT testing.
+
+First point of the DAC design accomplished, next steps assembly the full architecture. [J]
+[JC17]
+
+As summary, and based on the extracted DC figures of merit in this chapter, ID, gm, or gds values are consistent with the general trends highlighted in the GlobalFoundries 22FDX analog workshop. In that context, 22FDX FD-SOI is commonly reported to offer several advantages for analog design as:
+•	It can provide drive current and gm/ID efficiency comparable to high performance 28?nm bulk nodes.
+•	A reduction in gds (often reported up to ~1.8×) can improve output resistance.
+•	Transition frequency (fT) is reported to be competitive with the best 28?nm bulk results.
+•	Higher intrinsic voltage gain (gm/gds) is frequently observed, in some cases exceeding 2× depending on device option and biasing.
+•	The planar FD SOI structure is associated with relatively low source/drain and gate resistances (RSD and RG), which can be beneficial for high speed and low noise analog blocks.
+4.1 Further work.
+Body biasing capabilities in FDSOI opens a variety of opportunities such as achieving lower threshold voltages for the devices and lower power, and it can also be used for compensating process variations in a cell. [TFM 22nm FDSOI]
+Adding new functions (LSI designs requires FFs having additional functions like scan, reset, and set. The performance and cell area for these cells are also important [21])
+Explore new latch architectures ECL, etc. 
+Start with Layout, build the full architecture. Explore body biasing options from the technology.
+Explore calibration techniques [3,4,11] calibration techniques allows us to reduce the parasitic capacitance significantly, enabling the DAC to achieve superior dynamic linearity at high frequency. So we don’t need to increase area thanks to calibration. 
+Talk about power, needs to be limited to allow practical thermal management?
+Large-area current source arrays are widely used in current-steering digital-to-analog converters(DACs) to statically maintain a required level of matching accuracy between the current sources. This not only results in large die size but also in significant degradation of dynamic range for high-frequency signals. For this, calibration techniques can be presented which effectively compensates for current source mismatch and achieves high linearity with small die size and low power consumption [10]. 
+Cascode is widely used to enhance the output impedance of current sources and improve dynamic linearity, nut low supply voltages make it impractical to use cascaded current sources. In these calibration techniques become even more attractive [10]
+These techniques consume less power and do not introduce noise or spurs during normal operation [12].
+Some works use body biasing for the NMOS transistors in the Latch to make the design more robust [BachThesis].
+Back-gate control, allows for a Vt reduction, enables smaller switches due lower Ron/W and Ron·C. Smaller Ron/W stands for smallers switches, smaller layout, reduced parasitic and even smaller switches. These advantages can be utilized to realize architectures that would be inefficient or unrealistic in bulk. 
+22FDX, uses back-gate biasing to control current mirror VTH directly, being excellent for multi-channel ADC drivers, analog SoC front ends, and precision references.
+
+
+
+
+References.
+[1] “Compiled analog and digital building blocks in 22nm FDSOI,” M.S. thesis, Dept. of Electronic Systems, Norwegian University of Science and Technology (NTNU), 2018. Available: https://ntnuopen.ntnu.no/ntnu-xmlui/handle/11250/2566931
+[2] Weste, Neil H. E., and David Money Harris. CMOS VLSI Design: A Circuits and Systems Perspective. 4th ed., Addison-Wesley, 2010. ISBN: 978-0-321-54795-9.
+[3] Carusone, Tony Chan, David A. Johns, and Kenneth W. Martin. Analog Integrated Circuit Design. 2nd ed., John Wiley & Sons, 2012. ISBN: 978-0-470-77010-4.
+[4] S. V. R. Reddy Kaipu, “Design and Layout of a HighSpeed HighResolution Current Steering DAC based on an Optimized Switching Sequence,” Bachelor’s thesis, Indian Institute of Information Technology (IIIT), Allahabad, India, 2017. Identifier: IEC2013027. Available: https://www.researchgate.net/profile/Vineel-Kaipu/publication/325957352
+[5] H. Zhu, W. Yang, and N. Egan, “Calibration technique tracking temperature for currentsteering digitaltoanalog converters,” in Proc. IEEE 57th International Midwest Symposium on Circuits and Systems (MWSCAS), College Station, TX, USA, Aug. 2014, pp. 1–4, Doi:10.1109/MWSCAS.2014.6908337. Available: https://ieeexplore.ieee.org/document/6908337
+[6] Y. Cong and R. L. Geiger, “A 1.5V 14Bit 100MS/s SelfCalibrated DAC,” IEEE Journal of SolidState Circuits, vol. 38, no. 12, pp. 2051–2060, Dec. 2003, doi: 10.1109/JSSC.2003.819163. Available: https://ieeexplore.ieee.org/document/1253851
+[7] D. A. Mercer, “LowPower Approaches to HighSpeed CurrentSteering DigitaltoAnalog Converters in 0.18um CMOS,” IEEE Journal of SolidState Circuits, vol. 42, no. 9, pp. 1916–1926, Sep. 2007, doi: 10.1109/JSSC.2007.900279. Available: https://ieeexplore.ieee.org/document/4277871
+[8] J. Zhao et al., "A ?89-dBc IMD3 DAC Sub-System in a 465-MHz BW CT Delta-Sigma ADC Using a Power and Area Efficient Calibration Technique," in IEEE Transactions on Circuits and Systems II: Express Briefs, vol. 65, no. 7, pp. 859-863, July 2018, doi: 10.1109/TCSII.2017.2732736. Available: https://ieeexplore.ieee.org/document/7994687
+[9] The new radar SoCs: sharper vision for automated driving – Automotive semiconductors and sensors from Bosch. Available: https://www.bosch-semiconductors.com/stories/the-new-radar-socs/
+[10] N. A. Badiger, S. Iyer and S. Gejji, "Power and Delay Analysis of a CMOS Inverter," 2023 International Conference on Data Science and Network Security (ICDSNS), Tiptur, India, 2023, pp. 1-6, doi: 10.1109/ICDSNS58469.2023.10244825. Available: https://ieeexplore.ieee.org/document/10244825
+[11] GlobalFoundries, FDSOI Technology Innovations Extend Moore’s Law, technical white paper.[Online].Available: https://www.globalfoundries.com/sites/default/files/technicalpaper/fd-soi-technology-extendmoores-law.pdf. 
+[12] GLOBALFOUNDRIES webinar, Analog Design Workshop for 22FDX 22nm FDSOI Technology, Part I.
+[13] Q. H. Le et al., "W-Band Noise Characterization with Back-Gate Effects for Advanced 22nm FDSOI mm-Wave MOSFETs," 2020 IEEE Radio Frequency Integrated Circuits Symposium (RFIC), Los Angeles, CA, USA, 2020, pp. 131-134, doi: 10.1109/RFIC49505.2020.9218369.
+[14] A. Siddiqi, N. Jain and M. Rashed, "Back-bias generator for post-fabrication threshold voltage tuning applications in 22nm FD-SOI process," 2018 19th International Symposium on Quality Electronic Design (ISQED), Santa Clara, CA, USA, 2018, pp. 268-273, doi: 10.1109/ISQED.2018.8357299.
+[15] Razavi, Behzad. Design of Analog CMOS Integrated Circuits. 2nd ed., McGraw-Hill Education, 2017. ISBN: 978-1-259-61861-5.
+[16] G. I. Radulov, P. J. Quinn, J. A. Hegt, and A. van Roermund, “A Selfcalibrating currentsteering 12bit DAC based on new 1bit selftest scheme,” in Proc. IEEE IC Test Workshop, Limerick, Ireland, 2004, pp. 49–54. Available (PDF): https://pure.tue.nl/ws/files/3796674/675268807439705.pdf
+[17] H. Zhu, W. Yang, G. Engel, and Y.B. Kim, “A TwoParameter Calibration Technique Tracking Temperature Variations for Current Source Mismatch,” Apr. 2017, Doi: 10.1109/TCSII.2016.2572667. Available: https://ieeexplore.ieee.org/document/7478105 
+[18] B. Jacob, S. W. Ng, and D. T. Wang, “DRAM Device Organization: Basic Circuits and Architecture,” in Memory Systems. Morgan Kaufmann, 2008, pp. 353–376, doi: 10.1016/B978-012379751-3.50010-2. Available: https://www.sciencedirect.com/science/article/pii/B9780123797513500102
+[19] Rajasri, K., Bharathi, A., & Manikandan, M. (2014). Performance of Flip-Flop Using 22 nm CMOS Technology. Available: https://www.rroij.com/open-access/performance-of-flipflop-using-22nm-cmostechnology.pdf
+[20] Siu, Christopher. Electronic Devices, Circuits, and Applications. Springer, Cham, 2022. ISBN: 978-3-030-80537-1. DOI: 10.1007/978-3-030-80538-8.
+[21] aa
+[22] Aa
+[23] Aa
+[24] Aa
+[25] as
+[JC1]With the structures section, comment advantages and disadvantages of each one.
+[JC2]Review names or maybe change for static and dynamic configs.
+[JC3]Forzado??
+[JC4]Realmente aquí no enseño los histogramas, pero es como se hace...
+[JC5]No evaluado directamente.
+[JC6]find
+[JC7]find
+[JC8]numerar
+[JC9]numerar
+[JC10]Es el motivo por el que utilizamos lvt entonces?
+* [JC11]That’s a big problem in our architecture.
+
+If the flip-flops are heavily loaded (large clock tree, large fanout, or they directly drive sizable gate loads such as big switch gates, thermometer decoders, or retiming chains), the higher input capacitance (clock/data pin capacitance) and especially higher Miller-related effects can:
+* 
+* increase clock dynamic power (clock toggles every cycle),
+* slow down edges (more load for the same driver),
+* increase clock-to-Q / setup time slightly if internal node capacitances are also higher. In this case, SLVT’s higher (I_{D,sat}) often still improves speed, but the gain can be smaller than expected, and clock power can rise.
+* If leakage/standby power matters (battery/always-on, long idle, stringent static power budget), SLVT is often the bigger issue because (I_{off}) can rise by orders of magnitude. A bank of SLVT flops can dominate standby power, especially in FF/TT corners and at high temperature.
+* If the flip-flops are not the critical path (DAC settling dominated by analog switch RC, output buffer, reference settling, or mismatch/noise limits), then SLVT in flops may bring little benefit while still costing leakage and clock power—so it’s usually not the best trade.
+Practical guidance (common in mixed-signal IDACs):
+* Use LVT (or even RVT) for most state-holding logic and clocked storage if standby power matters.
+* Use SLVT only where you truly need speed, e.g., a small subset of timing-critical flops on the fastest clock boundary.
+* Consider body-bias (if available in your flow) to tune (V_T): forward body-bias for speed in active mode, reverse body-bias for leakage in standby.
+[JC12]Review cuando termines el capítulo
+[JC13]Understand well how to design a active-low. Only changing the clokcs??
+[JC14]Review is well designed. 
+[JC15]CMOS VLSI design
+[JC16]A 25-Gb/s 13 mW Clock and Data Recovery Using C2MOS
+[JC17]TFM 22nm FDSOI
+
+
+
+
+
+
+
+
+
+	
+
+
+4
+
